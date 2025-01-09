@@ -7,6 +7,7 @@ package it.unibo.spe.mdd.sheduler.validation;
 import it.unibo.spe.mdd.sheduler.TimeUtils;
 import it.unibo.spe.mdd.sheduler.services.ShedulerGrammarAccess;
 import it.unibo.spe.mdd.sheduler.sheduler.*;
+import it.unibo.spe.mdd.sheduler.sheduler.Date;
 import it.unibo.spe.mdd.sheduler.sheduler.impl.TaskPoolSetImpl;
 import org.eclipse.xtext.validation.Check;
 import org.eclipse.xtext.validation.CheckType;
@@ -16,8 +17,7 @@ import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class contains custom validation rules. 
@@ -87,9 +87,23 @@ public class ShedulerValidator extends AbstractShedulerValidator {
     }
 
     @Check(CheckType.FAST)
-    public void ensureTaskNameSamePool(TaskPool pool, Task task) {
-//        if(TaskPoolSet.) {
-//            error("Repeated task name", task, ShedulerPackage.Literals.TASK_POOL__NAME, 0);
-//        }
+    public void ensureTaskNameSamePool(TaskPoolSet poolSet) {
+        List<String> pools = new ArrayList<>();
+        poolSet.getPools().forEach(pool -> {
+             List<String> tasks = new ArrayList<>();
+             pool.getTasks().forEach(task -> {
+                 if(tasks.contains(task.getName())) {
+                     error("Task "+ task.getName() +" already declared", task, ShedulerPackage.Literals.TASK__NAME, 0);
+                 } else {
+                     tasks.add(task.getName());
+                 }
+             });
+             if(pools.contains(pool.getName())) {
+                 error("Pool "+ pool.getName() +" already declared", pool, ShedulerPackage.Literals.TASK_POOL__NAME, 0);
+             } else {
+                 pools.add(pool.getName());
+             }
+        });
+
     }
 }
