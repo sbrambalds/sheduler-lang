@@ -92,6 +92,9 @@ public class ShedulerValidator extends AbstractShedulerValidator {
         poolSet.getPools().forEach(pool -> {
              List<String> tasks = new ArrayList<>();
              pool.getTasks().forEach(task -> {
+                 if ((task.getBefore() != null || task.getAfter() != null) && task.getPeriod() != null) {
+                     error("Task before/after another task cannot have periodicity", task, ShedulerPackage.Literals.TASK__PERIOD, 0);
+                 }
                  if(tasks.contains(task.getName())) {
                      error("Task "+ task.getName() +" already declared", task, ShedulerPackage.Literals.TASK__NAME, 0);
                  } else {
