@@ -5,11 +5,17 @@ package it.unibo.spe.mdd.sheduler.validation;
 
 
 import it.unibo.spe.mdd.sheduler.TimeUtils;
+import it.unibo.spe.mdd.sheduler.services.ShedulerGrammarAccess;
 import it.unibo.spe.mdd.sheduler.sheduler.*;
+import it.unibo.spe.mdd.sheduler.sheduler.impl.TaskPoolSetImpl;
 import org.eclipse.xtext.validation.Check;
 import org.eclipse.xtext.validation.CheckType;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDateTime;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,5 +36,60 @@ public class ShedulerValidator extends AbstractShedulerValidator {
         if (date.getDay() < 1 || date.getDay() > 31) {
             error("Day must be between 1 and 31", date, ShedulerPackage.Literals.DATE__DAY, 0);
         }
+    }
+
+    @Check(CheckType.FAST)
+    public void ensureRelativeTimeIsValid(RelativeTime time) {
+        time.getTimeSpans().forEach(v -> {
+            if(v.getDuration() > ChronoUnit.FOREVER.getDuration().getNano()) {
+                warning("Value of "+ v.getUnit() +" is too high", v, ShedulerPackage.Literals.CLOCK_TIME__MILLISECOND,0);
+            }
+            if((v.getUnit() == TimeUnit.NANOSECONDS || v.getUnit() == TimeUnit.MILLISECONDS) && (v.getDuration() < 0 || v.getDuration() > 999)) {
+                error("Millisecond and nanosecond must be between 0 and 999", v.eContainingFeature(), 0);
+            }
+            if((v.getUnit() == TimeUnit.MINUTES || v.getUnit() == TimeUnit.SECONDS) && (v.getDuration() < 0 || v.getDuration() > 59)) {
+                error("Second amd minute must be between 0 and 59", v.eContainingFeature(), 0);
+            }
+            if(v.getUnit() == TimeUnit.HOURS && (v.getDuration() < 0 || v.getDuration() > 24)) {
+                error("Hour must be between 0 and 24", v.eContainingFeature(), 0);
+            }
+        });
+    }
+
+    @Check(CheckType.FAST)
+    public void ensureAbsoluteTimeIsValid(AbsoluteTime time) {
+        if(time.getDate().getYear() > LocalDateTime.MAX.getYear()) {
+            warning("Year value is too high", time.getDate(), ShedulerPackage.Literals.DATE__YEAR, 0);
+        }
+        if(TimeUtils.toLocalDateTime(time).isBefore(LocalDateTime.now()) || TimeUtils.toLocalDateTime(time).isEqual(LocalDateTime.now())) {
+            error("Only future dates admitted", time.getDate(), ShedulerPackage.Literals.DATE__YEAR, 0);
+        }
+
+    }
+
+    @Check(CheckType.FAST)
+    public void ensureClockTimeIsValid(ClockTime clockTime){
+        if(clockTime.getHour() < 0 || clockTime.getHour() > 24){
+            error("Hour must be between 0 and 24", clockTime, ShedulerPackage.Literals.CLOCK_TIME__HOUR, 0);
+        }
+        if(clockTime.getMinute() < 0 || clockTime.getMinute() > 59){
+            error("Minute must be between 0 and 59", clockTime, ShedulerPackage.Literals.CLOCK_TIME__MINUTE, 0);
+        }
+        if(clockTime.getSecond() < 0 || clockTime.getSecond() > 59){
+            error("Second must be between 0 and 59", clockTime, ShedulerPackage.Literals.CLOCK_TIME__SECOND, 0);
+        }
+        if(clockTime.getMillisecond() < 0 || clockTime.getMillisecond() > 999){
+            error("Millisecond must be between 0 and 999", clockTime, ShedulerPackage.Literals.CLOCK_TIME__MILLISECOND, 0);
+        }
+        if(clockTime.getNanosecond() < 0 || clockTime.getNanosecond() > 999){
+            error("Nanosecond must be between 0 and 999", clockTime, ShedulerPackage.Literals.CLOCK_TIME__NANOSECOND, 0);
+        }
+    }
+
+    @Check(CheckType.FAST)
+    public void ensureTaskNameSamePool(TaskPool pool, Task task) {
+//        if(TaskPoolSet.) {
+//            error("Repeated task name", task, ShedulerPackage.Literals.TASK_POOL__NAME, 0);
+//        }
     }
 }
