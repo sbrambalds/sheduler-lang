@@ -12,8 +12,10 @@ import org.eclipse.emf.ecore.EReference;
 import org.eclipse.xtext.EcoreUtil2;
 import org.eclipse.xtext.scoping.IScope;
 import org.eclipse.xtext.scoping.Scopes;
+import org.eclipse.xtext.scoping.impl.FilteringScope;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -27,9 +29,9 @@ public class ShedulerScopeProvider extends AbstractShedulerScopeProvider {
     @Override
     public IScope getScope(EObject context, EReference reference) {
         if(context instanceof Task && (reference == ShedulerPackage.Literals.TASK__BEFORE || reference == ShedulerPackage.Literals.TASK__AFTER)) {
-            EObject rootPool = EcoreUtil2.getRootContainer(context);
-            List<Task> candidates = EcoreUtil2.getAllContentsOfType(rootPool, Task.class);
-            return Scopes.scopeFor(candidates);
+            List<Task> candidates = EcoreUtil2.getAllContentsOfType(context.eContainer(), Task.class);
+            IScope existingScope = Scopes.scopeFor(candidates);
+            return new FilteringScope(existingScope, e -> !e.getEObjectOrProxy().equals(context));
         }
         return super.getScope(context, reference);
     }
