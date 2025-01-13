@@ -13,7 +13,12 @@ import org.eclipse.xtext.generator.IFileSystemAccess2;
 import org.eclipse.xtext.generator.IGeneratorContext;
 
 import java.io.*;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +33,14 @@ public class ShedulerGenerator extends AbstractShedulerGenerator {
 		TaskPoolSet taskPools = (TaskPoolSet) resource.getContents().get(0);
 		String inputFileName = inputFile.getName().split("\\.")[0];
 		// TODO compute content of files depending on taskPools
+		ExecutorService executor = Executors.newScheduledThreadPool(1);
+		taskPools.getPools().forEach(pool -> {
+			pool.getTasks().forEach(task -> {
+				String[] command = task.getCommand().split(" ");
+				ProcessBuilder pb = new ProcessBuilder(command[0], command[1]);
+                executor.submit(pb::start);
+            });
+		});
 		fsa.generateFile("generated_from_" + inputFileName + ".java", "content here");
 	}
 
